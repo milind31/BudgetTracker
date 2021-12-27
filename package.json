@@ -8,15 +8,36 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@react-native-community/segmented-control": "^2.2.2",
+    "@react-native-masked-view/masked-view": "0.2.6",
+    "@react-native-picker/picker": "2.2.1",
+    "@react-native-segmented-control/segmented-control": "^2.4.0",
+    "@react-navigation/native": "^6.0.6",
+    "@react-navigation/native-stack": "^6.2.5",
+    "@react-navigation/stack": "^6.0.11",
     "expo": "~44.0.0",
+    "expo-sqlite": "~10.1.0",
     "expo-status-bar": "~1.2.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-native": "0.64.3",
-    "react-native-web": "0.17.1"
+    "react-native-chart-kit": "^6.11.0",
+    "react-native-cli": "^2.0.1",
+    "react-native-elements": "^3.4.2",
+    "react-native-gesture-handler": "~2.1.0",
+    "react-native-picker-select": "^8.0.4",
+    "react-native-safe-area-context": "3.3.2",
+    "react-native-screens": "~3.10.1",
+    "react-native-sqlite-storage": "^6.0.1",
+    "react-native-svg": "^12.1.1",
+    "react-native-web": "0.17.1",
+    "typeorm": "^0.2.41"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.9"
+    "@babel/core": "^7.12.9",
+    "@babel/plugin-proposal-decorators": "^7.16.5",
+    "@types/node": "^17.0.4",
+    "babel-plugin-transform-typescript-metadata": "^0.3.2"
   },
   "private": true
 }
