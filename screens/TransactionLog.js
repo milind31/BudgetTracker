@@ -27,7 +27,7 @@ export default function TransactionLog({ navigation }) {
                     for (let i = 0; i < rows.length; i += 1) {
                         var row = [];
                         row.push(rows['_array'][i]['item']);
-                        row.push(rows['_array'][i]['type'] === 'Expense' ? -1 * rows['_array'][i]['amount'] : rows['_array'][i]['amount']);
+                        row.push(rows['_array'][i]['type'] === 'Expense' ? '-$' + rows['_array'][i]['amount'].toString() : '$' + rows['_array'][i]['amount'].toString());
                         row.push(rows['_array'][i]['category']);
                         row.push(rows['_array'][i]['month'].toString() + '/' + rows['_array'][i]['day'].toString() + '/' + rows['_array'][i]['year'].toString());
                         row.push(rows['_array'][i]['description']);
@@ -53,6 +53,6 @@ export default function TransactionLog({ navigation }) {
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20, paddingTop: 30, backgroundColor: '#fff' },
     head: { height: 40, backgroundColor: '#f1f8ff' },
-    text: { margin: 6 },
+    text: { fontSize: 10, margin: 6 },
     table: { margin: 10, marginTop: 25, justifyContent: 'center' }
   });
