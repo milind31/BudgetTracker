@@ -12,7 +12,7 @@ import openDatabase from '../database';
 
 const db = openDatabase();
 
-export default function App() {
+export default function AddTransaction() {
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState(0.00);
   const [category, setCategory] = useState('');

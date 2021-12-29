@@ -84,6 +84,7 @@ export default function Home({ navigation }) {
             backgroundColor={"transparent"}
             absolute
         />
+        <Button title="View Transactions"  onPress={() => navigation.navigate('TransactionLog')}></Button>
     </SafeAreaView>
   );
 }

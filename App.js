@@ -8,6 +8,7 @@ import { Button } from 'react-native';
 /* Screens */
 import AddTransaction from './screens/AddTransaction';
 import Home from './screens/Home';
+import TransactionLog from './screens/TransactionLog';
 
 const Stack = createNativeStackNavigator(); 
 
@@ -23,7 +24,7 @@ export default function App() {
             headerRight: () => (
               <Button
               onPress={() => navigation.navigate('AddTransaction')}
-              title="+"
+              title="➕"
               />
             ),
           })}
@@ -34,6 +35,13 @@ export default function App() {
           options={{
             title: 'Add a Transaction',
             cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          }}
+        />
+        <Stack.Screen 
+          name="TransactionLog" 
+          component={TransactionLog}
+          options={{
+            title: 'View Transactions',
           }}
         />
       </Stack.Navigator>
