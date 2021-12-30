@@ -18,9 +18,9 @@ const Stack = createNativeStackNavigator();
 const db = openDatabase();
 
 db.transaction((tx) => {
-  tx.executeSql(
-    "drop table if exists Budget;"
-  );
+  //tx.executeSql(
+  //  "drop table if exists Budget;"
+  //);
   tx.executeSql(
     "create table if not exists Transact (item varchar(100) not null, amount numeric not null, category varchar(100) not null, description varchar(500), type varchar(10) not null, month int not null, day int not null, year int not null);"
   );
