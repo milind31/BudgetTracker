@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native';
-import { PieChart, ProgressChart, ContributionGraph } from "react-native-chart-kit";
+import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-native-chart-kit";
 import { StyleSheet, View, Text, Button } from 'react-native';
 import { Dimensions } from "react-native";
 
@@ -22,6 +22,23 @@ const categoryMap = {
     'Other' : 'other',
     'Transportation' : 'transportation'
 }
+
+const monthMap = {
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December',
+}
+
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 // each value represents a goal ring in Progress chart
 const data = {
@@ -46,6 +63,7 @@ export default function Home({ navigation }) {
     const [progressData, setProgressData] = useState({labels:[], data: []});
     const [overBudget, setOverBudget] = useState([]);
     const [contribData, setContribData] = useState([]);
+    const [barData, setBarData] = useState({labels: ['loading'], datasets: [{data:[100]}]});
 
     useEffect(() => {
         //get net difference in expense and income
@@ -84,6 +102,47 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBudgetData(copyBudgetData);
+                }
+            );
+        });
+
+
+        var month = 12;
+        var year = 2021;
+
+        var sqlBlanks = []; //array to fill in sql query blanks
+        var lastSixMonths = [];
+
+        for(let i = 0; i < 6; i += 1) {
+            sqlBlanks.push(month);
+            sqlBlanks.push(year);
+            lastSixMonths.push(month);
+            month -= 1;
+            if (month === 0) {
+                month = 12;
+                year -= 1;
+            }
+        }
+
+        db.transaction((tx) => {
+            tx.executeSql("select month, sum(amount) as amount from Transact where (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) group by month, year", sqlBlanks, (_, { rows }) =>
+                {
+                    var monthlyData = {};
+                    for (let i = 0; i < rows.length; i += 1) {
+                        monthlyData[rows['_array'][i]['month']] = rows['_array'][i]['amount'];
+                    }
+                    var labels = [];
+                    var data = [];
+                    for (let i = 0; i < 6; i += 1) {
+                        labels.push(monthMap[lastSixMonths[i]]);
+                        if (lastSixMonths[i] in monthlyData) {
+                            data.push(monthlyData[lastSixMonths[i]]);
+                        }
+                        else {
+                            data.push(0)
+                        }
+                    }
+                    setBarData({labels: labels, datasets: [{data:data}]});
                 }
             );
         });
@@ -187,6 +246,14 @@ export default function Home({ navigation }) {
             />
             <Button title="View Transactions"  onPress={() => navigation.navigate('TransactionLog')}></Button>
         </View>
+        <BarChart
+            data={barData}
+            width={screenWidth}
+            height={220}
+            yAxisLabel="$"
+            chartConfig={chartConfig}
+            verticalLabelRotation={30}
+        />
         </ScrollView>
     </SafeAreaView>
   );
