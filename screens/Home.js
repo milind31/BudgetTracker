@@ -47,7 +47,6 @@ export default function Home({ navigation }) {
     const [overBudget, setOverBudget] = useState([]);
     const [contribData, setContribData] = useState([]);
 
-
     useEffect(() => {
         //get net difference in expense and income
         db.transaction((tx) => {
@@ -78,13 +77,13 @@ export default function Home({ navigation }) {
         db.transaction((tx) => {
             tx.executeSql("select * from Budget", [], (_, { rows }) =>
                 {
+                    var copyBudgetData = budgetData;
                     for (const [key, value] of Object.entries(rows['_array'][0])) {
-                        var copyBudgetData = budgetData;
                         if (value != -1 && key != 'user') {
                             copyBudgetData[key] = value;
                         }
-                        setBudgetData(copyBudgetData);
                     }
+                    setBudgetData(copyBudgetData);
                 }
             );
         });
@@ -94,85 +93,100 @@ export default function Home({ navigation }) {
                 {
                     var tempCategoryData = [];
                     var sum = 0;
+                    var copyBudgetData = budgetData;
+                    var purchasedCategories = new Set();
                     for (let i = 0; i < rows.length; i += 1) {
-                        sum += rows["_array"][i]['amount']; //get total amount spent
+                        const amount = rows["_array"][i]['amount'];
+                        const category = rows["_array"][i]['category'];
+                        const mappedCategory = categoryMap[category];
+                        sum += amount; //get total amount spent
 
-                        console.log(rows["_array"][i]['category'])
-                        if (categoryMap[rows["_array"][i]['category']] in budgetData) {
-                            budgetData[categoryMap[rows["_array"][i]['category']]] = rows["_array"][i]['amount'] / budgetData[categoryMap[rows["_array"][i]['category']]];
+                        if (mappedCategory in copyBudgetData) {
+                            if (amount != 0) { 
+                                purchasedCategories.add(mappedCategory);
+                                var originalValue = copyBudgetData[mappedCategory];
+                                copyBudgetData[mappedCategory] = amount / originalValue;
+                            }
                         }
 
-                        const category = {
-                            name: rows["_array"][i]['category'] === 'Fast Food/Restaurant' ? 'Eating Out' : rows["_array"][i]['category'],
-                            amount: rows["_array"][i]['amount'],
+                        const pieChartCategory = {
+                            name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category,
+                            amount: amount,
                             color: '#' + Math.floor(Math.random()*16777215).toString(16),
                             legendFontColor: "#7F7F7F",
                             legendFontSize: 15
                         }
-                        tempCategoryData.push(category);
+                        tempCategoryData.push(pieChartCategory);
                     }
                     var tempProgressData = [];
                     var tempProgressLabels = [];
                     var overBudgetCopy = [];
 
-                    for (const [key, value] of Object.entries(budgetData)) {
+                    for (const [key, value] of Object.entries(copyBudgetData)) {
+                        if (!(purchasedCategories.has(key))) {
+                            continue;
+                        }
                         if (value <= 1) {
-                            tempProgressData.push(value);
+                            tempProgressData.push(parseFloat(value.toFixed(2)));
                             tempProgressLabels.push(key);
                         }
                         else {
-                            overBudgetCopy.push(key.toString() + "   " + ((100*value).toFixed(0)).toString() + '%');
+                            overBudgetCopy.push(key.toString() + ":   " + ((100*value).toFixed(0)).toString() + '%');
                         }
                     }
-
                     setOverBudget(overBudgetCopy);
-
                     setProgressData({data: tempProgressData, labels: tempProgressLabels});
-
                     setCategoryData(tempCategoryData);
                     setMonthlyTotal(sum.toFixed(2));
                 }
             );
         });
-        console.log((new Date(2022, 12, 0)).toDateString('yyyy-mm-dd'));
     }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-        <ScrollView>
-        <Text>Your monthly spending is: </Text>
-        <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
-        <Text>Net Monthly Balance: ${netMonthlyChange}</Text>
+    <SafeAreaView style={styles.mainContainer}>
+        <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.monthlySpending}>
+            <Text>Your monthly spending is: </Text>
+            <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
+            <Text>Net Monthly Balance: ${netMonthlyChange}</Text>
+        </View>
         <PieChart
             data={categoryData}
             width={screenWidth}
-            height={200}
+            height={150}
             chartConfig={chartConfig}
             accessor={"amount"}
             backgroundColor={"transparent"}
+            paddingLeft={-15}
             absolute
         />
-        <ProgressChart
-            data={progressData}
-            width={screenWidth}
-            height={220}
-            strokeWidth={16}
-            radius={32}
-            chartConfig={chartConfig}
-            hideLegend={false}
-        />
-        <Text>Over Budget:</Text>
+        <View style={styles.progressChart}>
+            <ProgressChart
+                data={progressData}
+                width={screenWidth*1}
+                height={200}
+                strokeWidth={10}
+                radius={50}
+                chartConfig={chartConfig}
+                hideLegend={false}
+            />
+        </View>
+        <Text style={styles.overBudget}>Categories Over Budget:</Text>
         {overBudget.map((str) => <Text>{str}</Text>)}
-        <ContributionGraph
-            values={contribData}
-            endDate={"2022-01-01" /* first day of next month */}
-            numDays={105}
-            width={screenWidth}
-            height={220}
-            chartConfig={chartConfig}
-        />
         <Button title="Set Budget"  onPress={() => navigation.navigate('SetBudget')}></Button>
-        <Button title="View Transactions"  onPress={() => navigation.navigate('TransactionLog')}></Button>
+        <View style={styles.contributionGraph}>
+            <ContributionGraph
+                values={contribData}
+                endDate={"2022-01-01" /* first day of next month */}
+                numDays={105}
+                width={screenWidth}
+                showMonthLabels={true}
+                height={220}
+                chartConfig={chartConfig}
+            />
+            <Button title="View Transactions"  onPress={() => navigation.navigate('TransactionLog')}></Button>
+        </View>
         </ScrollView>
     </SafeAreaView>
   );
@@ -180,12 +194,30 @@ export default function Home({ navigation }) {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#fff',
         alignItems: 'center',
-        justifyContent: 'center',
+        paddingTop: 25,
+        paddingBottom: 50,
+      },
+    mainContainer: {
+        backgroundColor: '#fff',
       },
     monthlyTotal: {
         fontSize: 75,
-    }
+    },
+    progressChart: {
+        marginLeft: -80,
+        padding: 20,
+        paddingTop: 50,
+    },
+    overBudget: {
+        fontSize: 20,
+        paddingBottom: 10,
+    },
+    contributionGraph: {
+        padding: 50,
+    },
+    monthlySpending: {
+        alignItems:'center',
+        padding: 25,
+    },
 })
