@@ -3,6 +3,9 @@ import { SafeAreaView } from 'react-native';
 import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-native-chart-kit";
 import { StyleSheet, View, Text, Button } from 'react-native';
 import { Dimensions } from "react-native";
+import RNPickerSelect from 'react-native-picker-select';
+
+import { pickerItemsExpense, pickerItemsIncome }  from '../constants/pickerItems'; 
 
 //Imports from helper files
 import openDatabase from '../database';
@@ -24,21 +27,19 @@ const categoryMap = {
 }
 
 const monthMap = {
-    1: 'January',
-    2: 'February',
+    1: 'Jan.',
+    2: 'Feb.',
     3: 'March',
     4: 'April',
     5: 'May',
     6: 'June',
     7: 'July',
-    8: 'August',
-    9: 'September',
-    10: 'October',
-    11: 'November',
-    12: 'December',
+    8: 'Aug.',
+    9: 'Sept.',
+    10: 'Oct.',
+    11: 'Nov.',
+    12: 'Dec.',
 }
-
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 // each value represents a goal ring in Progress chart
 const data = {
@@ -55,6 +56,9 @@ const chartConfig = {
     barPercentage: 0.5,
   };
 
+const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
+const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
+
 export default function Home({ navigation }) {
     const [monthlyTotal, setMonthlyTotal] = useState(0.00);
     const [netMonthlyChange, setNetMonthlyChange] = useState(0.00)
@@ -64,6 +68,8 @@ export default function Home({ navigation }) {
     const [overBudget, setOverBudget] = useState([]);
     const [contribData, setContribData] = useState([]);
     const [barData, setBarData] = useState({labels: ['loading'], datasets: [{data:[100]}]});
+    const [monthPicker, setMonthPicker] = useState([]);
+    const [month, setMonth] = useState({month: currentMonth, year: currentYear});
 
     useEffect(() => {
         //get net difference in expense and income
@@ -76,6 +82,7 @@ export default function Home({ navigation }) {
                 }
             );
         });
+
         db.transaction((tx) => {
             tx.executeSql("select month, day, year, count(*) as count from Transact group by month, day, year ", [], (_, { rows }) =>
                 {
@@ -88,6 +95,19 @@ export default function Home({ navigation }) {
                         data.push(contribution);
                     }
                     setContribData(data);
+                }
+            );
+        });
+
+        db.transaction((tx) => {
+            tx.executeSql("select month, year from Transact group by month, year ", [], (_, { rows }) =>
+                {
+                    let monthPickerItems = [];
+                    for (let i = 0; i < rows.length; i += 1) {
+                        let row = rows['_array'][i];
+                        monthPickerItems.push({label: monthMap[row['month']] + ' ' + row['year'], value: {month: row['month'], year: row['year']}})
+                    }
+                    setMonthPicker(monthPickerItems);
                 }
             );
         });
@@ -142,7 +162,7 @@ export default function Home({ navigation }) {
                             data.push(0)
                         }
                     }
-                    setBarData({labels: labels, datasets: [{data:data}]});
+                    setBarData({labels: labels.reverse(), datasets: [{data:data.reverse()}]});
                 }
             );
         });
@@ -209,6 +229,17 @@ export default function Home({ navigation }) {
             <Text>Your monthly spending is: </Text>
             <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
             <Text>Net Monthly Balance: ${netMonthlyChange}</Text>
+            <RNPickerSelect
+                style={pickerSelectStyles}
+                placeholder={{
+                    label: 'Change month...',
+                    value: null,
+                    color: '#9EA0A4',
+                }}
+                value={month}
+                onValueChange={(value) => {setMonth(value); console.log(value)}}
+                items={monthPicker}
+            />
         </View>
         <PieChart
             data={categoryData}
@@ -248,8 +279,8 @@ export default function Home({ navigation }) {
         </View>
         <BarChart
             data={barData}
-            width={screenWidth}
-            height={220}
+            width={screenWidth/1.1}
+            height={275}
             yAxisLabel="$"
             chartConfig={chartConfig}
             verticalLabelRotation={30}
@@ -287,4 +318,28 @@ const styles = StyleSheet.create({
         alignItems:'center',
         padding: 25,
     },
-})
+});
+
+const pickerSelectStyles = StyleSheet.create({
+    inputIOS: {
+      padding: 10,
+      margin: 15,
+      borderWidth: 0.5,
+      width: 300,
+      height: 40,
+      borderRadius: 7,
+      color: 'black',
+      paddingRight: 30, // to ensure the text is never behind the icon
+    },
+    inputAndroid: {
+      fontSize: 16,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderWidth: 0.5,
+      width: 300,
+      borderColor: 'purple',
+      borderRadius: 8,
+      color: 'black',
+      paddingRight: 30, // to ensure the text is never behind the icon
+    },
+  });

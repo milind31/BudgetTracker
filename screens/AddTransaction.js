@@ -65,15 +65,17 @@ export default function AddTransaction() {
       return
     }
 
+    let currentDate = new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/');
+
     var transactionItem = {
       item: item,
       amount: castedAmount.toFixed(2),
       category: category,
       description: description,
       type: type,
-      month: new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).substring(0, 2),
-      day: new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).substring(3, 5),
-      year: new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).substring(6, 10),
+      month: parseInt(currentDate[0]),
+      day: parseInt(currentDate[1]),
+      year: parseInt(currentDate[2]),
     }
 
     db.transaction(
