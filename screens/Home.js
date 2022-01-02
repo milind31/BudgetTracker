@@ -1,52 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native';
-import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-native-chart-kit";
-import { StyleSheet, View, Text, Button } from 'react-native';
-import { Dimensions } from "react-native";
-import RNPickerSelect from 'react-native-picker-select';
+//Import from react
+import { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, Button, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 
-import { pickerItemsExpense, pickerItemsIncome }  from '../constants/pickerItems'; 
+//Other imported components
+import RNPickerSelect from 'react-native-picker-select';
+import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-native-chart-kit";
 
 //Imports from helper files
 import openDatabase from '../database';
-import { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { categoryMap, monthMap } from '../constants/maps';
+import { getFirstDayOfNextMonth } from '../utilities/dates';
 
 const db = openDatabase();
-
 const screenWidth = Dimensions.get("window").width;
-
-//convert frontend category names to simplified variable names for backend
-const categoryMap = {
-    'Fast Food/Restaurant' : 'restaurant',
-    'Entertainment' : 'entertainment',
-    'Groceries' : 'groceries',
-    'Home Stuff' : 'home',
-    'Other' : 'other',
-    'Transportation' : 'transportation'
-}
-
-const monthMap = {
-    1: 'Jan.',
-    2: 'Feb.',
-    3: 'March',
-    4: 'April',
-    5: 'May',
-    6: 'June',
-    7: 'July',
-    8: 'Aug.',
-    9: 'Sept.',
-    10: 'Oct.',
-    11: 'Nov.',
-    12: 'Dec.',
-}
-
-// each value represents a goal ring in Progress chart
-const data = {
-    labels: ["Swim", "Bike", "Run"], // optional
-    data: [0.4, 0.6, 0.8]
-  };
-
+const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
+const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
 const chartConfig = {
     backgroundGradientFrom: "#1E2923",
     backgroundGradientFromOpacity: 0,
@@ -54,10 +22,7 @@ const chartConfig = {
     backgroundGradientToOpacity: 0,
     color: (opacity = 1) => `rgba(123, 123, 146, ${opacity})`,
     barPercentage: 0.5,
-  };
-
-const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
-const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
+};
 
 export default function Home({ navigation }) {
     const [monthlyTotal, setMonthlyTotal] = useState(0.00);
@@ -70,19 +35,28 @@ export default function Home({ navigation }) {
     const [barData, setBarData] = useState({labels: ['loading'], datasets: [{data:[100]}]});
     const [monthPicker, setMonthPicker] = useState([]);
     const [month, setMonth] = useState({month: currentMonth, year: currentYear});
+    const [hasBudget, setHasBudget] =  useState(false);
+    const [hasExpense, setHasExpense] = useState(false);
 
-    useEffect(() => {
-        //get net difference in expense and income
+    const setNetMontlyChangeData = () => {
+        //get and set net difference in expense and income
         db.transaction((tx) => {
-            tx.executeSql("with s1 as (select type, sum(amount) as amount from Transact where type='Income' group by type), s2 as (select type, sum(amount) as amount from Transact where type='Expense' group by type) select (s1.amount - s2.amount) as netDiff from s1, s2", [], (_, { rows }) =>
+            tx.executeSql("select type, sum(amount) as amount from Transact where type='Income' and month=? and year=? group by type", [month.month, month.year], (_, { rows }) =>
                 {
-                    if (rows.length > 0) {
-                        setNetMonthlyChange((rows["_array"][0]['netDiff']).toFixed(2));
-                    }
+                    var income = rows.length > 0 ? rows["_array"][0]['amount'] : 0;
+                    tx.executeSql("select type, sum(amount) as amount from Transact where type='Expense' and month=? and year=? group by type", [month.month, month.year], (_, { rows }) =>
+                        {
+                            var expense = rows.length > 0 ? rows["_array"][0]['amount'] : 0
+                            setNetMonthlyChange((income - expense).toFixed(2));
+                        }
+                    );
                 }
             );
         });
+    }
 
+    const setContributionData = () => {
+        //contribution chart
         db.transaction((tx) => {
             tx.executeSql("select month, day, year, count(*) as count from Transact group by month, day, year ", [], (_, { rows }) =>
                 {
@@ -98,23 +72,16 @@ export default function Home({ navigation }) {
                 }
             );
         });
+    }
 
-        db.transaction((tx) => {
-            tx.executeSql("select month, year from Transact group by month, year ", [], (_, { rows }) =>
-                {
-                    let monthPickerItems = [];
-                    for (let i = 0; i < rows.length; i += 1) {
-                        let row = rows['_array'][i];
-                        monthPickerItems.push({label: monthMap[row['month']] + ' ' + row['year'], value: {month: row['month'], year: row['year']}})
-                    }
-                    setMonthPicker(monthPickerItems);
-                }
-            );
-        });
+    const setData = () => {
+        setNetMontlyChangeData();
+        setContributionData();
 
         db.transaction((tx) => {
             tx.executeSql("select * from Budget", [], (_, { rows }) =>
                 {
+                    rows.length === 0 ? setHasBudget(false) : setHasBudget(true);
                     var copyBudgetData = budgetData;
                     for (const [key, value] of Object.entries(rows['_array'][0])) {
                         if (value != -1 && key != 'user') {
@@ -127,25 +94,25 @@ export default function Home({ navigation }) {
         });
 
 
-        var month = 12;
-        var year = 2021;
+        var m = month.month;
+        var y = month.year;
 
         var sqlBlanks = []; //array to fill in sql query blanks
         var lastSixMonths = [];
 
         for(let i = 0; i < 6; i += 1) {
-            sqlBlanks.push(month);
-            sqlBlanks.push(year);
-            lastSixMonths.push(month);
-            month -= 1;
-            if (month === 0) {
-                month = 12;
-                year -= 1;
+            sqlBlanks.push(m);
+            sqlBlanks.push(y);
+            lastSixMonths.push(m);
+            m -= 1;
+            if (m === 0) {
+                m = 12;
+                y -= 1;
             }
         }
 
         db.transaction((tx) => {
-            tx.executeSql("select month, sum(amount) as amount from Transact where (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) group by month, year", sqlBlanks, (_, { rows }) =>
+            tx.executeSql("select month, sum(amount) as amount from Transact where ((month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?)) and type='Expense' group by month, year", sqlBlanks, (_, { rows }) =>
                 {
                     var monthlyData = {};
                     for (let i = 0; i < rows.length; i += 1) {
@@ -168,8 +135,9 @@ export default function Home({ navigation }) {
         });
 
         db.transaction((tx) => {
-            tx.executeSql("select category, sum(amount) as amount from Transact where month=12 and type='Expense' group by category", [], (_, { rows }) =>
+            tx.executeSql("select category, sum(amount) as amount from Transact where month=? and year=? and type='Expense' group by category", [month.month, month.year], (_, { rows }) =>
                 {
+                    rows.length === 0 ? setHasExpense(false) : setHasExpense(true);
                     var tempCategoryData = [];
                     var sum = 0;
                     var copyBudgetData = budgetData;
@@ -220,6 +188,22 @@ export default function Home({ navigation }) {
                 }
             );
         });
+    }
+
+    useEffect(() => {
+        db.transaction((tx) => {
+            tx.executeSql("select month, year from Transact group by month, year ", [], (_, { rows }) =>
+                {
+                    let monthPickerItems = [];
+                    for (let i = 0; i < rows.length; i += 1) {
+                        let row = rows['_array'][i];
+                        monthPickerItems.push({label: monthMap[row['month']] + ' ' + row['year'], value: {month: row['month'], year: row['year']}})
+                    }
+                    setMonthPicker(monthPickerItems);
+                }
+            );
+        });
+        setData();
     }, []);
 
   return (
@@ -237,11 +221,11 @@ export default function Home({ navigation }) {
                     color: '#9EA0A4',
                 }}
                 value={month}
-                onValueChange={(value) => {setMonth(value); console.log(value)}}
+                onValueChange={(value) => {setMonth(value); setData();}}
                 items={monthPicker}
             />
         </View>
-        <PieChart
+        {hasExpense && <PieChart
             data={categoryData}
             width={screenWidth}
             height={150}
@@ -250,8 +234,8 @@ export default function Home({ navigation }) {
             backgroundColor={"transparent"}
             paddingLeft={-15}
             absolute
-        />
-        <View style={styles.progressChart}>
+        />}
+        {hasBudget && hasExpense && <View style={styles.progressChart}>
             <ProgressChart
                 data={progressData}
                 width={screenWidth*1}
@@ -261,21 +245,21 @@ export default function Home({ navigation }) {
                 chartConfig={chartConfig}
                 hideLegend={false}
             />
-        </View>
-        <Text style={styles.overBudget}>Categories Over Budget:</Text>
-        {overBudget.map((str) => <Text>{str}</Text>)}
+        </View>}
+        {hasBudget && hasExpense && <Text style={styles.overBudget}>Categories Over Budget:</Text>}
+        {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
         <Button title="Set Budget"  onPress={() => navigation.navigate('SetBudget')}></Button>
         <View style={styles.contributionGraph}>
             <ContributionGraph
                 values={contribData}
-                endDate={"2022-01-01" /* first day of next month */}
-                numDays={105}
+                endDate={getFirstDayOfNextMonth(month.month, month.year) /* first day of next month */}
+                numDays={100}
                 width={screenWidth}
                 showMonthLabels={true}
                 height={220}
                 chartConfig={chartConfig}
             />
-            <Button title="View Transactions"  onPress={() => navigation.navigate('TransactionLog')}></Button>
+            <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog')}></Button>
         </View>
         <BarChart
             data={barData}
