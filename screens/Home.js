@@ -1,6 +1,6 @@
 //Import from react
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Button, SafeAreaView, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Button, SafeAreaView, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
 
 //Other imported components
 import RNPickerSelect from 'react-native-picker-select';
@@ -13,6 +13,7 @@ import { getFirstDayOfNextMonth } from '../utilities/dates';
 
 const db = openDatabase();
 const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
 const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
 const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
 const chartConfig = {
@@ -37,8 +38,13 @@ export default function Home({ navigation }) {
     const [month, setMonth] = useState({month: currentMonth, year: currentYear});
     const [hasBudget, setHasBudget] =  useState(false);
     const [hasExpense, setHasExpense] = useState(false);
+    const [netMonthlyChangeLoaded, setNetMonthlyChangeLoaded] = useState(false);
+    const [contribDataLoaded, setContribDataLoaded] = useState(false);
+    const [budgetDataLoaded, setBudgetDataLoaded] = useState(false);
+    const [barChartDataLoaded, setBarChartDataLoaded] = useState(false);
+    const [categoryDataLoaded, setCategoryDataLoaded] = useState(false);
 
-    const setNetMontlyChangeData = () => {
+    const getNetMontlyChangeData = () => {
         //get and set net difference in expense and income
         db.transaction((tx) => {
             tx.executeSql("select type, sum(amount) as amount from Transact where type='Income' and month=? and year=? group by type", [month.month, month.year], (_, { rows }) =>
@@ -48,6 +54,7 @@ export default function Home({ navigation }) {
                         {
                             var expense = rows.length > 0 ? rows["_array"][0]['amount'] : 0
                             setNetMonthlyChange((income - expense).toFixed(2));
+                            setNetMonthlyChangeLoaded(true);
                         }
                     );
                 }
@@ -55,7 +62,7 @@ export default function Home({ navigation }) {
         });
     }
 
-    const setContributionData = () => {
+    const getContributionData = () => {
         //contribution chart
         db.transaction((tx) => {
             tx.executeSql("select month, day, year, count(*) as count from Transact group by month, day, year ", [], (_, { rows }) =>
@@ -69,15 +76,13 @@ export default function Home({ navigation }) {
                         data.push(contribution);
                     }
                     setContribData(data);
+                    setContribDataLoaded(true);
                 }
             );
         });
-    }
+    };
 
-    const setData = () => {
-        setNetMontlyChangeData();
-        setContributionData();
-
+    const getBudgetData = () => {
         db.transaction((tx) => {
             tx.executeSql("select * from Budget", [], (_, { rows }) =>
                 {
@@ -89,11 +94,13 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBudgetData(copyBudgetData);
+                    setBudgetDataLoaded(true);
                 }
             );
         });
+    };
 
-
+    const getBarChartData = () => {
         var m = month.month;
         var y = month.year;
 
@@ -114,7 +121,7 @@ export default function Home({ navigation }) {
         db.transaction((tx) => {
             tx.executeSql("select month, sum(amount) as amount from Transact where ((month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?) or (month=? and year=?)) and type='Expense' group by month, year", sqlBlanks, (_, { rows }) =>
                 {
-                    var monthlyData = {};
+                    var monthlyData = {}; //map month to amount spent that month
                     for (let i = 0; i < rows.length; i += 1) {
                         monthlyData[rows['_array'][i]['month']] = rows['_array'][i]['amount'];
                     }
@@ -130,24 +137,31 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBarData({labels: labels.reverse(), datasets: [{data:data.reverse()}]});
+                    setBarChartDataLoaded(true);
                 }
             );
         });
+    };
 
+    const getCategoryData = () => {
         db.transaction((tx) => {
             tx.executeSql("select category, sum(amount) as amount from Transact where month=? and year=? and type='Expense' group by category", [month.month, month.year], (_, { rows }) =>
                 {
                     rows.length === 0 ? setHasExpense(false) : setHasExpense(true);
+
                     var tempCategoryData = [];
                     var sum = 0;
                     var copyBudgetData = budgetData;
                     var purchasedCategories = new Set();
+
                     for (let i = 0; i < rows.length; i += 1) {
                         const amount = rows["_array"][i]['amount'];
                         const category = rows["_array"][i]['category'];
                         const mappedCategory = categoryMap[category];
+                        
                         sum += amount; //get total amount spent
 
+                        //determine whether returned categories have a budget
                         if (mappedCategory in copyBudgetData) {
                             if (amount != 0) { 
                                 purchasedCategories.add(mappedCategory);
@@ -156,6 +170,7 @@ export default function Home({ navigation }) {
                             }
                         }
 
+                        //populate pie chart data
                         const pieChartCategory = {
                             name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category,
                             amount: amount,
@@ -165,29 +180,45 @@ export default function Home({ navigation }) {
                         }
                         tempCategoryData.push(pieChartCategory);
                     }
-                    var tempProgressData = [];
-                    var tempProgressLabels = [];
-                    var overBudgetCopy = [];
+                    var progressValues = [];
+                    var progressLabels = [];
+                    var overBudgetCategories = [];
 
-                    for (const [key, value] of Object.entries(copyBudgetData)) {
+                    //organize categories with budget into no spending, under budget, and over budget
+                    for (const [key, value] of Object.entries(copyBudgetData)) { //no budget
                         if (!(purchasedCategories.has(key))) {
                             continue;
                         }
-                        if (value <= 1) {
-                            tempProgressData.push(parseFloat(value.toFixed(2)));
-                            tempProgressLabels.push(key);
+                        if (value <= 1) { //add to progress chart
+                            progressValues.push(parseFloat(value.toFixed(2)));
+                            progressLabels.push(key);
                         }
-                        else {
-                            overBudgetCopy.push(key.toString() + ":   " + ((100*value).toFixed(0)).toString() + '%');
+                        else { //over budget
+                            overBudgetCategories.push(key.toString() + ":   " + ((100*value).toFixed(0)).toString() + '%');
                         }
                     }
-                    setOverBudget(overBudgetCopy);
-                    setProgressData({data: tempProgressData, labels: tempProgressLabels});
+                    setOverBudget(overBudgetCategories);
+                    setProgressData({data: progressValues, labels: progressLabels});
                     setCategoryData(tempCategoryData);
                     setMonthlyTotal(sum.toFixed(2));
+                    setCategoryDataLoaded(true);
                 }
             );
         });
+    }
+
+    const setData = () => {
+        setNetMonthlyChangeLoaded(false);
+        setBudgetDataLoaded(false);
+        setContribDataLoaded(false);
+        setBarChartDataLoaded(false);
+        setCategoryDataLoaded(false);
+
+        getNetMontlyChangeData();
+        getContributionData();
+        getBudgetData();
+        getBarChartData();
+        getCategoryData();
     }
 
     useEffect(() => {
@@ -208,6 +239,7 @@ export default function Home({ navigation }) {
 
   return (
     <SafeAreaView style={styles.mainContainer}>
+        {(netMonthlyChangeLoaded && budgetDataLoaded && contribDataLoaded && barChartDataLoaded && categoryDataLoaded)  ?
         <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.monthlySpending}>
             <Text>Your monthly spending is: </Text>
@@ -220,8 +252,10 @@ export default function Home({ navigation }) {
                     value: null,
                     color: '#9EA0A4',
                 }}
+                doneText={'Select Month'}
                 value={month}
-                onValueChange={(value) => {setMonth(value); setData();}}
+                onDonePress={() => setData()}
+                onValueChange={(value) => setMonth(value)}
                 items={monthPicker}
             />
         </View>
@@ -247,8 +281,14 @@ export default function Home({ navigation }) {
             />
         </View>}
         {hasBudget && hasExpense && <Text style={styles.overBudget}>Categories Over Budget:</Text>}
+        {hasBudget && !!!(hasExpense) && <Text style={styles.overBudget}>You have not spent any money this month!</Text>}
+        {!!!(hasBudget) && hasExpense && <Text style={styles.overBudget}>You have not yet specified a budget!</Text>}
         {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
-        <Button title="Set Budget"  onPress={() => navigation.navigate('SetBudget')}></Button>
+        {hasBudget ? 
+            <Button title="Adjust Budget" onPress={() => navigation.navigate('SetBudget')}></Button> 
+            :
+            <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
+        }
         <View style={styles.contributionGraph}>
             <ContributionGraph
                 values={contribData}
@@ -270,6 +310,11 @@ export default function Home({ navigation }) {
             verticalLabelRotation={30}
         />
         </ScrollView>
+        : 
+        <ScrollView contentContainerStyle={styles.container}>
+            <ActivityIndicator style={{height: screenHeight/1.25}} size='large' color="#0000ff"/>
+        </ScrollView>
+        }
     </SafeAreaView>
   );
 }
@@ -302,6 +347,11 @@ const styles = StyleSheet.create({
         alignItems:'center',
         padding: 25,
     },
+    loader: {
+        alignItems: 'center',
+        flex: 0.5,
+        justifyContent: 'center'
+    }
 });
 
 const pickerSelectStyles = StyleSheet.create({
