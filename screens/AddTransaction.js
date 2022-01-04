@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { Button, SafeAreaView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 
@@ -77,6 +76,7 @@ export default function AddTransaction() {
       day: parseInt(currentDate[1]),
       year: parseInt(currentDate[2]),
     }
+    console.log(transactionItem)
 
     db.transaction(
       (tx) => {

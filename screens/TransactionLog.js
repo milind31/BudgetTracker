@@ -1,26 +1,22 @@
-import { StatusBar } from 'expo-status-bar';
-import { Dimensions } from "react-native";
+import { useEffect, useState } from 'react';
+import { Button } from 'react-native';
+import { Alert } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Text, SafeAreaView } from "react-native";
 
 //Components
-import { StyleSheet, Text, SafeAreaView } from 'react-native';
-import { Table, Row, Rows } from 'react-native-table-component';
-
+import { Table, Row, Rows, TableWrapper, Cell } from 'react-native-table-component';
 
 //Imports from helper files
 import openDatabase from '../database';
-import { useEffect, useState } from 'react';
 
 const db = openDatabase();
 
-const screenWidth = Dimensions.get("window").width;
-
-
-export default function TransactionLog({ navigation }) {
+export default function TransactionLog({ route, navigation }) {
     const [transactions, setTransactions] = useState([['','','','','']]);
 
     useEffect(() => {
         db.transaction((tx) => {
-            tx.executeSql("select * from Transact where month=12", [], (_, { rows }) => 
+            tx.executeSql("select * from Transact where month = ? and year = ?", [route.params.month, route.params.year], (_, { rows }) => 
                 {
                     var transactionsCopy = [];
                     //Format into Name, Price, Category, Date, Description arrays
@@ -31,21 +27,48 @@ export default function TransactionLog({ navigation }) {
                         row.push(rows['_array'][i]['category']);
                         row.push(rows['_array'][i]['month'].toString() + '/' + rows['_array'][i]['day'].toString() + '/' + rows['_array'][i]['year'].toString());
                         row.push(rows['_array'][i]['description']);
+                        row.push(rows['_array'][i]['id']);
                         transactionsCopy.push(row);
                     }
                     setTransactions(transactionsCopy);
                 }
             );
         });
-    }, [console.log(transactions)]);
+    }, []);
 
+  const onClickDelete = (rowData) => {
+    Alert.alert(
+      "Are you sure you want to delete?",
+      "",
+      [{ text: "Yes" , onPress: () => deleteRow(rowData)}, { text: "No" }]
+    );
+  }
+
+  const deleteRow = (rowData) => {
+    db.transaction((tx) => {
+      tx.executeSql("delete from Transact where id = ?", [rowData[rowData.length - 1]]);
+    });
+  }
 
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView>
         <Table style={styles.table} borderStyle={{borderWidth: 1, borderColor: '#c8e1ff'}}>
-          <Row data={['Name', 'Amount', 'Category', 'Date', 'Description']} style={styles.head} textStyle={styles.text}/>
-          <Rows data={transactions} textStyle={styles.text}/>
+          <Row data={['Name', 'Amount', 'Category', 'Date', 'Description', '']} style={styles.head} textStyle={styles.text}/>
+          {
+            transactions.map((rowData, index) => (
+              <TableWrapper key={index} style={styles.row}>
+                {
+                  rowData.map((cellData, cellIndex) => (
+                    <Cell key={cellIndex} data={cellIndex === 5 ? <Button title="X" onPress={() => {onClickDelete(rowData)}}/> : cellData} textStyle={styles.text}/>
+                  ))
+                }
+              </TableWrapper>
+            ))
+          }
+          {/*<Rows data={transactions} textStyle={styles.text}/>*/}
         </Table>
+        </ScrollView>
     </SafeAreaView>
   );
 }
@@ -53,6 +76,7 @@ export default function TransactionLog({ navigation }) {
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20, paddingTop: 30, backgroundColor: '#fff' },
     head: { height: 40, backgroundColor: '#f1f8ff' },
-    text: { fontSize: 10, margin: 6 },
-    table: { margin: 10, marginTop: 25, justifyContent: 'center' }
+    text: { fontSize: 9, margin: 6 },
+    table: { margin: 10, marginTop: 25, justifyContent: 'center' },
+    row: { flexDirection: 'row' },
   });

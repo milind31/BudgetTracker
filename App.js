@@ -22,10 +22,10 @@ db.transaction((tx) => {
   //  "drop table if exists Budget;"
   //);
   //tx.executeSql(
-  //  "delete from Transact where item = 'Drug Deal'"
+  //  "drop table if exists Transact;"
   //);
   tx.executeSql(
-    "create table if not exists Transact (item varchar(100) not null, amount numeric not null, category varchar(100) not null, description varchar(500), type varchar(10) not null, month int not null, day int not null, year int not null);"
+    "create table if not exists Transact (id INTEGER PRIMARY KEY AUTOINCREMENT, item varchar(100) not null, amount numeric not null, category varchar(100) not null, description varchar(500), type varchar(10) not null, month int not null, day int not null, year int not null);"
   );
   tx.executeSql(
     "create table if not exists Budget (user varchar(100) primary key, restaurant numeric, groceries numeric, home numeric, entertainment numeric, transportation numeric, other numeric);"

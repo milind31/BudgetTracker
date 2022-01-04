@@ -26,6 +26,8 @@ const chartConfig = {
 };
 
 export default function Home({ navigation }) {
+    const [month, setMonth] = useState({month: currentMonth, year: currentYear});
+
     const [monthlyTotal, setMonthlyTotal] = useState(0.00);
     const [netMonthlyChange, setNetMonthlyChange] = useState(0.00)
     const [categoryData, setCategoryData] = useState([]);
@@ -35,9 +37,10 @@ export default function Home({ navigation }) {
     const [contribData, setContribData] = useState([]);
     const [barData, setBarData] = useState({labels: ['loading'], datasets: [{data:[100]}]});
     const [monthPicker, setMonthPicker] = useState([]);
-    const [month, setMonth] = useState({month: currentMonth, year: currentYear});
+    
     const [hasBudget, setHasBudget] =  useState(false);
     const [hasExpense, setHasExpense] = useState(false);
+    
     const [netMonthlyChangeLoaded, setNetMonthlyChangeLoaded] = useState(false);
     const [contribDataLoaded, setContribDataLoaded] = useState(false);
     const [budgetDataLoaded, setBudgetDataLoaded] = useState(false);
@@ -233,8 +236,9 @@ export default function Home({ navigation }) {
                     setMonthPicker(monthPickerItems);
                 }
             );
+            setData();
         });
-        setData();
+        console.log(month);
     }, []);
 
   return (
@@ -269,7 +273,7 @@ export default function Home({ navigation }) {
             paddingLeft={-15}
             absolute
         />}
-        {hasBudget && hasExpense && <View style={styles.progressChart}>
+        {hasBudget && hasExpense && progressData.data.length > 0 && <View style={styles.progressChart}>
             <ProgressChart
                 data={progressData}
                 width={screenWidth*1}
@@ -280,7 +284,7 @@ export default function Home({ navigation }) {
                 hideLegend={false}
             />
         </View>}
-        {hasBudget && hasExpense && <Text style={styles.overBudget}>Categories Over Budget:</Text>}
+        {hasBudget && hasExpense && ( overBudget.length > 0 ? <Text style={styles.overBudget}>Categories Over Budget:</Text> : <Text style={styles.overBudget}>No categories over budget!</Text>)}
         {hasBudget && !!!(hasExpense) && <Text style={styles.overBudget}>You have not spent any money this month!</Text>}
         {!!!(hasBudget) && hasExpense && <Text style={styles.overBudget}>You have not yet specified a budget!</Text>}
         {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
@@ -299,7 +303,7 @@ export default function Home({ navigation }) {
                 height={220}
                 chartConfig={chartConfig}
             />
-            <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog')}></Button>
+            <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog', month)}></Button>
         </View>
         <BarChart
             data={barData}
