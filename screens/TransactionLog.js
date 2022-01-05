@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from 'react-native';
 import { Alert } from 'react-native';
-import { Dimensions, ScrollView, StyleSheet, Text, SafeAreaView } from "react-native";
+import { ScrollView, StyleSheet, SafeAreaView } from "react-native";
 
 //Components
-import { Table, Row, Rows, TableWrapper, Cell } from 'react-native-table-component';
+import { Table, Row, TableWrapper, Cell } from 'react-native-table-component';
 
 //Imports from helper files
 import openDatabase from '../database';
@@ -48,6 +48,7 @@ export default function TransactionLog({ route, navigation }) {
     db.transaction((tx) => {
       tx.executeSql("delete from Transact where id = ?", [rowData[rowData.length - 1]]);
     });
+    setTransactions(transactions.filter((e, _) => e[rowData.length - 1] != rowData[rowData.length - 1]));
   }
 
   return (

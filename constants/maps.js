@@ -1,11 +1,20 @@
 //convert frontend category names to simplified variable names for backend
-export const categoryMap = {
+export const simpleCategoryMap = {
     'Fast Food/Restaurant' : 'restaurant',
     'Entertainment' : 'entertainment',
     'Groceries' : 'groceries',
     'Home Stuff' : 'home',
     'Other' : 'other',
     'Transportation' : 'transportation'
+}
+
+export const formalCategoryMap = {
+    'restaurant' : 'Fast Food/Restaurant',
+    'entertainment' : 'Entertainment',
+    'groceries' : 'Groceries',
+    'home' : 'Home Stuff',
+    'other' : 'Other',
+    'transportation' : 'Transportation'
 }
 
 export const monthMap = {
@@ -21,4 +30,13 @@ export const monthMap = {
     10: 'Oct.',
     11: 'Nov.',
     12: 'Dec.',
+}
+
+export const colorMap = {
+    'Fast Food/Restaurant' : '#f72df7',
+    'Entertainment' : '#07b51e',
+    'Groceries' : '#156fcf',
+    'Home Stuff' : '#fa8211',
+    'Other' : '#fa1111',
+    'Transportation' : '#cfe625'
 }

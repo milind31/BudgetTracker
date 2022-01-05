@@ -93,6 +93,12 @@ export default function AddTransaction() {
     setAmount(0.00);
     setCategory('');
     setDescription('');
+
+    Alert.alert(
+      "Transaction has been added successfully!",
+      "",
+      [{ text: "OK" }]
+    );
   };
 
   return (

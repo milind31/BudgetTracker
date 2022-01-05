@@ -8,7 +8,7 @@ import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-nati
 
 //Imports from helper files
 import openDatabase from '../database';
-import { categoryMap, monthMap } from '../constants/maps';
+import { simpleCategoryMap, formalCategoryMap, monthMap, colorMap } from '../constants/maps';
 import { getFirstDayOfNextMonth } from '../utilities/dates';
 
 const db = openDatabase();
@@ -21,8 +21,8 @@ const chartConfig = {
     backgroundGradientFromOpacity: 0,
     backgroundGradientTo: "#08130D",
     backgroundGradientToOpacity: 0,
-    color: (opacity = 1) => `rgba(123, 123, 146, ${opacity})`,
-    barPercentage: 0.5,
+    color: (opacity = 1) => `rgba(8, 90, 45, ${opacity})`,
+    barPercentage: 0.6,
 };
 
 export default function Home({ navigation }) {
@@ -72,8 +72,11 @@ export default function Home({ navigation }) {
                 {
                     var data = [];
                     for (let i = 0; i < rows.length; i += 1) {
+                        let month= rows['_array'][i]['month'];
+                        let day = rows['_array'][i]['day'];
+                        let year = rows['_array'][i]['year'];
                         const contribution = {
-                            date: rows['_array'][i]['year'].toString() + '-' + rows['_array'][i]['month'].toString() + '-' + rows['_array'][i]['day'].toString(),
+                            date: year.toString() + '-' + (month < 10 ? '0' : '') + month.toString() + '-' +  (day < 10 ? '0' : '') + day.toString(),
                             count: rows['_array'][i]['count']
                         }
                         data.push(contribution);
@@ -160,7 +163,7 @@ export default function Home({ navigation }) {
                     for (let i = 0; i < rows.length; i += 1) {
                         const amount = rows["_array"][i]['amount'];
                         const category = rows["_array"][i]['category'];
-                        const mappedCategory = categoryMap[category];
+                        const mappedCategory = simpleCategoryMap[category];
                         
                         sum += amount; //get total amount spent
 
@@ -177,7 +180,7 @@ export default function Home({ navigation }) {
                         const pieChartCategory = {
                             name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category,
                             amount: amount,
-                            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+                            color: colorMap[category],
                             legendFontColor: "#7F7F7F",
                             legendFontSize: 15
                         }
@@ -194,10 +197,10 @@ export default function Home({ navigation }) {
                         }
                         if (value <= 1) { //add to progress chart
                             progressValues.push(parseFloat(value.toFixed(2)));
-                            progressLabels.push(key);
+                            progressLabels.push(formalCategoryMap[key]);
                         }
                         else { //over budget
-                            overBudgetCategories.push(key.toString() + ":   " + ((100*value).toFixed(0)).toString() + '%');
+                            overBudgetCategories.push(formalCategoryMap[key.toString()] + ":   " + ((100*value).toFixed(0)).toString() + '%');
                         }
                     }
                     setOverBudget(overBudgetCategories);
@@ -238,8 +241,13 @@ export default function Home({ navigation }) {
             );
             setData();
         });
-        console.log(month);
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            setData();
+            //Put your Data loading function here instead of my loadData()
+          });
+      
+          return unsubscribe;
+    }, [navigation]);
 
   return (
     <SafeAreaView style={styles.mainContainer}>
@@ -248,7 +256,7 @@ export default function Home({ navigation }) {
         <View style={styles.monthlySpending}>
             <Text>Your monthly spending is: </Text>
             <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
-            <Text>Net Monthly Balance: ${netMonthlyChange}</Text>
+            <Text>Net Monthly Balance: {netMonthlyChange > 0 ? '$' + String(netMonthlyChange) : '-$' + String(netMonthlyChange * -1)}</Text>
             <RNPickerSelect
                 style={pickerSelectStyles}
                 placeholder={{
@@ -276,7 +284,7 @@ export default function Home({ navigation }) {
         {hasBudget && hasExpense && progressData.data.length > 0 && <View style={styles.progressChart}>
             <ProgressChart
                 data={progressData}
-                width={screenWidth*1}
+                width={screenWidth*1.1}
                 height={200}
                 strokeWidth={10}
                 radius={50}
@@ -294,6 +302,7 @@ export default function Home({ navigation }) {
             <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
         }
         <View style={styles.contributionGraph}>
+            <Text style={styles.sectionHeader}>Transaction History</Text>
             <ContributionGraph
                 values={contribData}
                 endDate={getFirstDayOfNextMonth(month.month, month.year) /* first day of next month */}
@@ -305,6 +314,7 @@ export default function Home({ navigation }) {
             />
             <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog', month)}></Button>
         </View>
+        <Text style={styles.sectionHeader}>Last Six Months</Text>
         <BarChart
             data={barData}
             width={screenWidth/1.1}
@@ -346,6 +356,8 @@ const styles = StyleSheet.create({
     },
     contributionGraph: {
         padding: 50,
+        paddingRight: 25,
+        alignItems: 'center',
     },
     monthlySpending: {
         alignItems:'center',
@@ -355,6 +367,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flex: 0.5,
         justifyContent: 'center'
+    },
+    sectionHeader: {
+        fontSize: 30,
+        padding: 20,
     }
 });
 
