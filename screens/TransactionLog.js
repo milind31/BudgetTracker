@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from 'react-native';
 import { Alert } from 'react-native';
 import { ScrollView, StyleSheet, SafeAreaView } from "react-native";
@@ -67,7 +67,6 @@ export default function TransactionLog({ route, navigation }) {
               </TableWrapper>
             ))
           }
-          {/*<Rows data={transactions} textStyle={styles.text}/>*/}
         </Table>
         </ScrollView>
     </SafeAreaView>

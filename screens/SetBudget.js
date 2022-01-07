@@ -1,23 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { Dimensions } from "react-native";
-
 //Components
 import { StyleSheet, Text, SafeAreaView, View, TextInput, Button, Alert } from 'react-native';
 
 //Imports from helper files
 import openDatabase from '../database';
 import { useEffect, useState } from 'react';
+import { ScrollView } from 'react-native';
 
 const db = openDatabase();
 
-export default function SetBudget({ navigation }) {
+export default function SetBudget() {
   const [restaurant, setRestaurant] = useState(-1.00);
   const [groceries, setGroceries] = useState(-1.00);
   const [home, setHome] = useState(-1.00);
   const [entertainment, setEntertainment] = useState(-1.00);
   const [transportation, setTransportation] = useState(-1.00);
   const [other, setOther] = useState(-1.00);
-  const [hasBudget, setHasBudget] = useState(false);
 
     useEffect(() => {
         db.transaction((tx) => {
@@ -36,10 +33,7 @@ export default function SetBudget({ navigation }) {
                     }
                     else {
                         console.log('initializing first row')
-                        tx.executeSql('INSERT INTO Budget (user, restaurant, groceries, home, entertainment, transportation, other) VALUES (?, ?, ?, ?, ?, ?, ?)', ['user', -1.00, -1.00, -1.00, -1.00, -1.00, -1.00],
-                            (txObj, resultSet) => console.log(''),
-                            (txObj, error) => console.log('Error', error)
-                        );
+                        tx.executeSql('INSERT INTO Budget (user, restaurant, groceries, home, entertainment, transportation, other) VALUES (?, ?, ?, ?, ?, ?, ?)', ['user', -1.00, -1.00, -1.00, -1.00, -1.00, -1.00]);
                     }
                 }
             );
@@ -48,10 +42,9 @@ export default function SetBudget({ navigation }) {
 
     const onSubmitBudget = () => {
         db.transaction((tx) => {
-            tx.executeSql("UPDATE Budget SET restaurant=?, groceries=?, home=?, entertainment=?, transportation=?, other=? WHERE user='user'", [parseFloat(restaurant).toFixed(2), parseFloat(groceries).toFixed(2), parseFloat(home).toFixed(2), parseFloat(entertainment).toFixed(2), parseFloat(transportation).toFixed(2), parseFloat(other).toFixed(2)], 
-                (txObj, resultSet) => console.log(''),
-                (txObj, error) => console.log('Error', error)
-            );
+            tx.executeSql("UPDATE Budget SET restaurant=?, groceries=?, home=?, entertainment=?, transportation=?, other=? WHERE user='user'", 
+            [parseFloat(restaurant).toFixed(2), parseFloat(groceries).toFixed(2), parseFloat(home).toFixed(2), parseFloat(entertainment).toFixed(2), parseFloat(transportation).toFixed(2), parseFloat(other).toFixed(2)]);
+            
             tx.executeSql("select * from Budget", [], (_, { rows }) => console.log(rows));
         });
         Alert.alert(
@@ -63,65 +56,67 @@ export default function SetBudget({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Set Budget</Text>
-      </View>
-      <View style={styles.form}>
-        <View style={styles.category}>
-            <Text style={styles.label}>Food/Restaurant: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setRestaurant(value === '' ? -1.00 : value)}
-            value={restaurant === -1.00 ? '' : String(restaurant)}
-            />
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps='handled'>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Set Budget</Text>
         </View>
-        <View style={styles.category}>
-            <Text style={styles.label}>Groceries: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setGroceries(value === '' ? -1.00 : value)}
-            value={groceries === -1.00 ? '' : String(groceries)}
-            />
+        <View style={styles.form}>
+          <View style={styles.category}>
+              <Text style={styles.label}>Food/Restaurant: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setRestaurant(value === '' ? -1.00 : value)}
+              value={restaurant === -1.00 ? '' : String(restaurant)}
+              />
+          </View>
+          <View style={styles.category}>
+              <Text style={styles.label}>Groceries: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setGroceries(value === '' ? -1.00 : value)}
+              value={groceries === -1.00 ? '' : String(groceries)}
+              />
+          </View>
+          <View style={styles.category}>
+              <Text style={styles.label}>Home Stuff: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setHome(value === '' ? -1.00 : value)}
+              value={home === -1.00 ? '' : String(home)}
+              />
+          </View>
+          <View style={styles.category}>
+              <Text style={styles.label}>Entertainment: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setEntertainment(value === '' ? -1.00 : value)}
+              value={entertainment === -1.00 ? '' : String(entertainment)}
+              />
+          </View>
+          <View style={styles.category}>
+              <Text style={styles.label}>Transportation: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setTransportation(value === '' ? -1.00 : value)}
+              value={transportation === -1.00 ? '' : String(transportation)}
+              />
+          </View>
+          <View style={styles.category}>
+              <Text style={styles.label}>Other: </Text>
+              <TextInput style={styles.input}
+              keyboardType="numeric"
+              onChangeText={(value) => setOther(value === '' ? -1.00 : value)}
+              value={other === -1.00 ? '' : String(other)}
+              />
+          </View>
+          <View style={{padding: 50}}>
+              <Button           
+                  title="Submit"
+                  onPress={() => onSubmitBudget()}
+              />
+          </View>
         </View>
-        <View style={styles.category}>
-            <Text style={styles.label}>Home Stuff: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setHome(value === '' ? -1.00 : value)}
-            value={home === -1.00 ? '' : String(home)}
-            />
-        </View>
-        <View style={styles.category}>
-            <Text style={styles.label}>Entertainment: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setEntertainment(value === '' ? -1.00 : value)}
-            value={entertainment === -1.00 ? '' : String(entertainment)}
-            />
-        </View>
-        <View style={styles.category}>
-            <Text style={styles.label}>Transportation: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setTransportation(value === '' ? -1.00 : value)}
-            value={transportation === -1.00 ? '' : String(transportation)}
-            />
-        </View>
-        <View style={styles.category}>
-            <Text style={styles.label}>Other: </Text>
-            <TextInput style={styles.input}
-            keyboardType="numeric"
-            onChangeText={(value) => setOther(value === '' ? -1.00 : value)}
-            value={other === -1.00 ? '' : String(other)}
-            />
-        </View>
-        <View style={{padding: 50}}>
-            <Button           
-                title="Submit"
-                onPress={() => onSubmitBudget()}
-            />
-        </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

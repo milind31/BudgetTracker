@@ -7,6 +7,7 @@ import RNPickerSelect from 'react-native-picker-select';
 
 //Imports from helper files
 import { pickerItemsExpense, pickerItemsIncome }  from '../constants/pickerItems'; 
+import { pickerSelectStyles } from '../styles/styles';
 import openDatabase from '../database';
 
 const db = openDatabase();
@@ -46,6 +47,34 @@ export default function AddTransaction() {
   const onSubmitTransaction = () => {
     var amountCopy = amount;
     var castedAmount = +amountCopy;
+
+    if (amount > 100000) {
+      Alert.alert(
+        "Amount must be less than $100,000",
+        "I know you ain't got it like that bro...",
+        [{ text: "OK" }]
+      );
+      return
+    }
+
+    if (item.length > 50) {
+      Alert.alert(
+        "Item has max length of 50 characters",
+        "",
+        [{ text: "OK" }]
+      );
+      return
+    }
+
+    if (description.length > 100) {
+      Alert.alert(
+        "Description has max length of 100 characters",
+        "",
+        [{ text: "OK" }]
+      );
+      return
+    }
+
     if (isNaN(castedAmount)) {
       Alert.alert(
         "Amount must be a numerical value",
@@ -80,9 +109,7 @@ export default function AddTransaction() {
 
     db.transaction(
       (tx) => {
-        tx.executeSql('INSERT INTO Transact (item, amount, category, description, type, month, day, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [transactionItem.item, transactionItem.amount, transactionItem.category, transactionItem.description, transactionItem.type, transactionItem.month, transactionItem.day, transactionItem.year],
-        (txObj, resultSet) => console.log(''),
-        (txObj, error) => console.log('Error', error));
+        tx.executeSql('INSERT INTO Transact (item, amount, category, description, type, month, day, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [transactionItem.item, transactionItem.amount, transactionItem.category, transactionItem.description, transactionItem.type, transactionItem.month, transactionItem.day, transactionItem.year]);
         tx.executeSql("select * from Transact", [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
@@ -176,28 +203,4 @@ const styles = StyleSheet.create({
     top: '10%',
     fontSize: 200,
   }
-});
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    padding: 10,
-    margin: 15,
-    borderWidth: 0.5,
-    width: 300,
-    height: 40,
-    borderRadius: 7,
-    color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 0.5,
-    width: 300,
-    borderColor: 'purple',
-    borderRadius: 8,
-    color: 'black',
-    paddingRight: 30, // to ensure the text is never behind the icon
-  },
 });

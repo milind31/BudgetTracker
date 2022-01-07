@@ -10,6 +10,7 @@ import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-nati
 import openDatabase from '../database';
 import { simpleCategoryMap, formalCategoryMap, monthMap, colorMap } from '../constants/maps';
 import { getFirstDayOfNextMonth } from '../utilities/dates';
+import { pickerSelectStyles } from '../styles/styles';
 
 const db = openDatabase();
 const screenWidth = Dimensions.get("window").width;
@@ -21,7 +22,7 @@ const chartConfig = {
     backgroundGradientFromOpacity: 0,
     backgroundGradientTo: "#08130D",
     backgroundGradientToOpacity: 0,
-    color: (opacity = 1) => `rgba(8, 90, 45, ${opacity})`,
+    color: (opacity = 1) => `rgba(80, 90, 45, ${opacity})`,
     barPercentage: 0.6,
 };
 
@@ -92,7 +93,12 @@ export default function Home({ navigation }) {
         db.transaction((tx) => {
             tx.executeSql("select * from Budget", [], (_, { rows }) =>
                 {
-                    rows.length === 0 ? setHasBudget(false) : setHasBudget(true);
+                    if (rows.length === 0) {
+                        setHasBudget(false);
+                        setBudgetDataLoaded(true);
+                        return
+                    }
+                    setHasBudget(true);
                     var copyBudgetData = budgetData;
                     for (const [key, value] of Object.entries(rows['_array'][0])) {
                         if (value != -1 && key != 'user') {
@@ -100,6 +106,8 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBudgetData(copyBudgetData);
+                    console.log('budget done');
+
                     setBudgetDataLoaded(true);
                 }
             );
@@ -143,6 +151,8 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBarData({labels: labels.reverse(), datasets: [{data:data.reverse()}]});
+                    console.log('bar done');
+
                     setBarChartDataLoaded(true);
                 }
             );
@@ -182,7 +192,7 @@ export default function Home({ navigation }) {
                             amount: amount,
                             color: colorMap[category],
                             legendFontColor: "#7F7F7F",
-                            legendFontSize: 15
+                            legendFontSize: 12
                         }
                         tempCategoryData.push(pieChartCategory);
                     }
@@ -207,6 +217,7 @@ export default function Home({ navigation }) {
                     setProgressData({data: progressValues, labels: progressLabels});
                     setCategoryData(tempCategoryData);
                     setMonthlyTotal(sum.toFixed(2));
+                    console.log('cat done');
                     setCategoryDataLoaded(true);
                 }
             );
@@ -226,8 +237,10 @@ export default function Home({ navigation }) {
         getBarChartData();
         getCategoryData();
     }
+    
 
     useEffect(() => {
+        console.log('picker set');
         db.transaction((tx) => {
             tx.executeSql("select month, year from Transact group by month, year ", [], (_, { rows }) =>
                 {
@@ -243,7 +256,6 @@ export default function Home({ navigation }) {
         });
         const unsubscribe = navigation.addListener('focus', () => {
             setData();
-            //Put your Data loading function here instead of my loadData()
           });
       
           return unsubscribe;
@@ -256,7 +268,7 @@ export default function Home({ navigation }) {
         <View style={styles.monthlySpending}>
             <Text>Your monthly spending is: </Text>
             <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
-            <Text>Net Monthly Balance: {netMonthlyChange > 0 ? '$' + String(netMonthlyChange) : '-$' + String(netMonthlyChange * -1)}</Text>
+            <Text>Net Monthly Balance: {netMonthlyChange >= 0 ? '$' + String(netMonthlyChange) : '-$' + String(netMonthlyChange * -1)}</Text>
             <RNPickerSelect
                 style={pickerSelectStyles}
                 placeholder={{
@@ -264,7 +276,6 @@ export default function Home({ navigation }) {
                     value: null,
                     color: '#9EA0A4',
                 }}
-                doneText={'Select Month'}
                 value={month}
                 onDonePress={() => setData()}
                 onValueChange={(value) => setMonth(value)}
@@ -281,13 +292,14 @@ export default function Home({ navigation }) {
             paddingLeft={-15}
             absolute
         />}
-        {hasBudget && hasExpense && progressData.data.length > 0 && <View style={styles.progressChart}>
+        {hasBudget && hasExpense && progressData.data.length > 0 && 
+        <View style={styles.progressChart}>
             <ProgressChart
                 data={progressData}
-                width={screenWidth*1.1}
+                width={screenWidth}
                 height={200}
                 strokeWidth={10}
-                radius={50}
+                radius={30}
                 chartConfig={chartConfig}
                 hideLegend={false}
             />
@@ -301,17 +313,18 @@ export default function Home({ navigation }) {
             :
             <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
         }
-        <View style={styles.contributionGraph}>
+        <View style={styles.contributions}>
             <Text style={styles.sectionHeader}>Transaction History</Text>
-            <ContributionGraph
-                values={contribData}
-                endDate={getFirstDayOfNextMonth(month.month, month.year) /* first day of next month */}
-                numDays={100}
-                width={screenWidth}
-                showMonthLabels={true}
-                height={220}
-                chartConfig={chartConfig}
-            />
+            <View>
+                <ContributionGraph
+                    values={contribData}
+                    endDate={getFirstDayOfNextMonth(month.month, month.year)}
+                    numDays={100}
+                    width={screenWidth}
+                    height={220}
+                    chartConfig={chartConfig}
+                />
+            </View>
             <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog', month)}></Button>
         </View>
         <Text style={styles.sectionHeader}>Last Six Months</Text>
@@ -346,18 +359,20 @@ const styles = StyleSheet.create({
         fontSize: 75,
     },
     progressChart: {
-        marginLeft: -80,
+        marginLeft: -125,
         padding: 20,
-        paddingTop: 50,
+        paddingTop: 30,
     },
     overBudget: {
         fontSize: 20,
         paddingBottom: 10,
     },
-    contributionGraph: {
+    contributions: {
         padding: 50,
-        paddingRight: 25,
         alignItems: 'center',
+    },
+    contributionGraph: {
+        paddingRight: 25,
     },
     monthlySpending: {
         alignItems:'center',
@@ -373,27 +388,3 @@ const styles = StyleSheet.create({
         padding: 20,
     }
 });
-
-const pickerSelectStyles = StyleSheet.create({
-    inputIOS: {
-      padding: 10,
-      margin: 15,
-      borderWidth: 0.5,
-      width: 300,
-      height: 40,
-      borderRadius: 7,
-      color: 'black',
-      paddingRight: 30, // to ensure the text is never behind the icon
-    },
-    inputAndroid: {
-      fontSize: 16,
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-      borderWidth: 0.5,
-      width: 300,
-      borderColor: 'purple',
-      borderRadius: 8,
-      color: 'black',
-      paddingRight: 30, // to ensure the text is never behind the icon
-    },
-  });
