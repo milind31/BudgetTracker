@@ -1,6 +1,6 @@
 //Import from react
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Button, SafeAreaView, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Button, SafeAreaView, ScrollView, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
 
 //Other imported components
 import RNPickerSelect from 'react-native-picker-select';
@@ -9,14 +9,12 @@ import { PieChart, ProgressChart, ContributionGraph, BarChart } from "react-nati
 //Imports from helper files
 import openDatabase from '../database';
 import { simpleCategoryMap, formalCategoryMap, monthMap, colorMap } from '../constants/maps';
-import { getFirstDayOfNextMonth } from '../utilities/dates';
+import { getFirstDayOfNextMonth, currentMonth, currentYear } from '../utilities/dates';
 import { pickerSelectStyles } from '../styles/styles';
 
 const db = openDatabase();
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
-const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
 const chartConfig = {
     backgroundGradientFrom: "#1E2923",
     backgroundGradientFromOpacity: 0,
@@ -255,7 +253,7 @@ export default function Home({ navigation }) {
             setData();
         });
         const unsubscribe = navigation.addListener('focus', () => {
-            setData();
+            //setData();
           });
       
           return unsubscribe;
@@ -264,7 +262,15 @@ export default function Home({ navigation }) {
   return (
     <SafeAreaView style={styles.mainContainer}>
         {(netMonthlyChangeLoaded && budgetDataLoaded && contribDataLoaded && barChartDataLoaded && categoryDataLoaded)  ?
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView 
+            contentContainerStyle={styles.container}
+            refreshControl={
+                <RefreshControl
+                    refreshing={!netMonthlyChangeLoaded || !budgetDataLoaded || !contribDataLoaded || !barChartDataLoaded || !categoryDataLoaded}
+                    onRefresh={setData}
+                />
+            }
+        >
         <View style={styles.monthlySpending}>
             <Text>Your monthly spending is: </Text>
             <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>

@@ -6,3 +6,6 @@ export var getFirstDayOfNextMonth = (month, year) => {
     }
     return ( String(year) + '-' + (month >= 10 ? String(month) : ('0' + String(month))) + '-01' )
 }
+
+export const currentMonth = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[0]);
+export const currentYear = parseInt(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/')[2]);
