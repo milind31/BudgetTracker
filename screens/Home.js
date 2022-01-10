@@ -271,77 +271,77 @@ export default function Home({ navigation }) {
                 />
             }
         >
-        <View style={styles.monthlySpending}>
-            <Text>Your monthly spending is: </Text>
-            <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
-            <Text>Net Monthly Balance: {netMonthlyChange >= 0 ? '$' + String(netMonthlyChange) : '-$' + String(netMonthlyChange * -1)}</Text>
-            <RNPickerSelect
-                style={pickerSelectStyles}
-                placeholder={{
-                    label: 'Change month...',
-                    value: null,
-                    color: '#9EA0A4',
-                }}
-                value={month}
-                onDonePress={() => setData()}
-                onValueChange={(value) => setMonth(value)}
-                items={monthPicker}
-            />
-        </View>
-        {hasExpense && <PieChart
-            data={categoryData}
-            width={screenWidth}
-            height={150}
-            chartConfig={chartConfig}
-            accessor={"amount"}
-            backgroundColor={"transparent"}
-            paddingLeft={-15}
-            absolute
-        />}
-        {hasBudget && hasExpense && progressData.data.length > 0 && 
-        <View style={styles.progressChart}>
-            <ProgressChart
-                data={progressData}
-                width={screenWidth}
-                height={200}
-                strokeWidth={10}
-                radius={30}
-                chartConfig={chartConfig}
-                hideLegend={false}
-            />
-        </View>}
-        {hasBudget && hasExpense && ( overBudget.length > 0 ? <Text style={styles.overBudget}>Categories Over Budget:</Text> : <Text style={styles.overBudget}>No categories over budget!</Text>)}
-        {hasBudget && !!!(hasExpense) && <Text style={styles.overBudget}>You have not spent any money this month!</Text>}
-        {!!!(hasBudget) && hasExpense && <Text style={styles.overBudget}>You have not yet specified a budget!</Text>}
-        {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
-        {hasBudget ? 
-            <Button title="Adjust Budget" onPress={() => navigation.navigate('SetBudget')}></Button> 
-            :
-            <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
-        }
-        <View style={styles.contributions}>
-            <Text style={styles.sectionHeader}>Transaction History</Text>
-            <View>
-                <ContributionGraph
-                    values={contribData}
-                    endDate={getFirstDayOfNextMonth(month.month, month.year)}
-                    numDays={100}
-                    width={screenWidth}
-                    height={220}
-                    chartConfig={chartConfig}
+            <View style={styles.monthlySpending}>
+                <Text>Your monthly spending is: </Text>
+                <Text style={styles.monthlyTotal}>${monthlyTotal}</Text>
+                <Text>Net Monthly Balance: {netMonthlyChange >= 0 ? '$' + String(netMonthlyChange) : '-$' + String(netMonthlyChange * -1)}</Text>
+                <RNPickerSelect
+                    style={pickerSelectStyles}
+                    placeholder={{
+                        label: 'Change month...',
+                        value: null,
+                        color: '#9EA0A4',
+                    }}
+                    value={month}
+                    onDonePress={() => setData()}
+                    onValueChange={(value) => setMonth(value)}
+                    items={monthPicker}
                 />
             </View>
-            <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog', month)}></Button>
-        </View>
-        <Text style={styles.sectionHeader}>Last Six Months</Text>
-        <BarChart
-            data={barData}
-            width={screenWidth/1.1}
-            height={275}
-            yAxisLabel="$"
-            chartConfig={chartConfig}
-            verticalLabelRotation={30}
-        />
+            {hasExpense && <PieChart
+                data={categoryData}
+                width={screenWidth}
+                height={150}
+                chartConfig={chartConfig}
+                accessor={"amount"}
+                backgroundColor={"transparent"}
+                paddingLeft={-15}
+                absolute
+            />}
+            {hasBudget && hasExpense && progressData.data.length > 0 && 
+            <View style={styles.progressChart}>
+                <ProgressChart
+                    data={progressData}
+                    width={screenWidth}
+                    height={200}
+                    strokeWidth={10}
+                    radius={30}
+                    chartConfig={chartConfig}
+                    hideLegend={false}
+                />
+            </View>}
+            {hasBudget && hasExpense && ( overBudget.length > 0 ? <Text style={styles.overBudget}>Categories Over Budget:</Text> : <Text style={styles.overBudget}>No categories over budget!</Text>)}
+            {hasBudget && !!!(hasExpense) && <Text style={styles.overBudget}>You have not spent any money this month!</Text>}
+            {!!!(hasBudget) && hasExpense && <Text style={styles.overBudget}>You have not yet specified a budget!</Text>}
+            {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
+            {hasBudget ? 
+                <Button title="Adjust Budget" onPress={() => navigation.navigate('SetBudget')}></Button> 
+                :
+                <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
+            }
+            <View style={styles.contributions}>
+                <Text style={styles.sectionHeader}>Transaction History</Text>
+                <View>
+                    <ContributionGraph
+                        values={contribData}
+                        endDate={getFirstDayOfNextMonth(month.month, month.year)}
+                        numDays={100}
+                        width={screenWidth}
+                        height={220}
+                        chartConfig={chartConfig}
+                    />
+                </View>
+                <Button title="View Transactions Log"  onPress={() => navigation.navigate('TransactionLog', month)}></Button>
+            </View>
+            <Text style={styles.sectionHeader}>Last Six Months</Text>
+            <BarChart
+                data={barData}
+                width={screenWidth/1.1}
+                height={275}
+                yAxisLabel="$"
+                chartConfig={chartConfig}
+                verticalLabelRotation={30}
+            />
         </ScrollView>
         : 
         <ScrollView contentContainerStyle={styles.container}>

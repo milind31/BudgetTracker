@@ -30,8 +30,6 @@ db.transaction((tx) => {
   tx.executeSql(
     "create table if not exists Budget (user varchar(100) primary key, restaurant numeric, groceries numeric, home numeric, entertainment numeric, transportation numeric, other numeric);"
   );
-  tx.executeSql('INSERT INTO Transact (item, amount, category, description, type, month, day, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ['F', 123, 'Groceries', '', 'Expense', 12, 31, 2021]);
-
 });
 
 export default function App() {

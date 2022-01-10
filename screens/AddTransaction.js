@@ -8,16 +8,21 @@ import RNPickerSelect from 'react-native-picker-select';
 //Imports from helper files
 import { pickerItemsExpense, pickerItemsIncome }  from '../constants/pickerItems'; 
 import { pickerSelectStyles } from '../styles/styles';
+import { currentMonth, currentYear, currentDay, getMaxDayInMonth } from '../utilities/dates';
 import openDatabase from '../database';
+import { fullMonthMap } from '../constants/maps';
 
 const db = openDatabase();
 
-export default function AddTransaction() {
+export default function AddTransaction({ route, navigation }) {
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState(0.00);
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('Expense');
+  const [dayOfMonth, setDayOfMonth] = useState(route.params ? 0.00 : currentDay);
+  const [month, setMonth] = useState(route.params ? route.params.month : currentMonth);
+  const [year, setYear] = useState(route.params ? route.params.year : currentYear);
   const [pickerItems, setPickerItems] =  useState(pickerItemsExpense);
 
   useEffect(() => {
@@ -48,15 +53,6 @@ export default function AddTransaction() {
     var amountCopy = amount;
     var castedAmount = +amountCopy;
 
-    if (amount > 100000) {
-      Alert.alert(
-        "Amount must be less than $100,000",
-        "I know you ain't got it like that bro...",
-        [{ text: "OK" }]
-      );
-      return
-    }
-
     if (item.length > 50) {
       Alert.alert(
         "Item has max length of 50 characters",
@@ -84,6 +80,15 @@ export default function AddTransaction() {
       return
     }
 
+    if (amount > 100000 || amount < 0) {
+      Alert.alert(
+        "Amount must be less than $100,000 (and greater than $0)",
+        "I know you ain't got it like that bro...",
+        [{ text: "OK" }]
+      );
+      return
+    }
+
     if (!item || !amount || !category) {
       Alert.alert(
         "Missing required value...",
@@ -93,7 +98,14 @@ export default function AddTransaction() {
       return
     }
 
-    let currentDate = new Date().toLocaleString("en-US", {timeZone: "America/New_York"}).split('/');
+    if (dayOfMonth > getMaxDayInMonth(month, year) || dayOfMonth < 0) {
+      Alert.alert(
+        `${dayOfMonth} is not a valid day in ${fullMonthMap[month]} ...`,
+        "",
+        [{ text: "OK" }]
+      );
+      return
+    }
 
     var transactionItem = {
       item: item,
@@ -101,9 +113,9 @@ export default function AddTransaction() {
       category: category,
       description: description,
       type: type,
-      month: parseInt(currentDate[0]),
-      day: parseInt(currentDate[1]),
-      year: parseInt(currentDate[2]),
+      month: month,
+      day: dayOfMonth,
+      year: year,
     }
     console.log(transactionItem)
 
@@ -140,6 +152,13 @@ export default function AddTransaction() {
         />
       </View>
       <View style={styles.form}>
+        {route.params &&
+        <TextInput style={styles.input}
+          keyboardType="numeric"
+          onChangeText={(value) => setDayOfMonth(value)}
+          placeholder="Enter day of month purchased here..."
+          value={dayOfMonth === 0 ? '' : dayOfMonth.toString()}
+        />}
         <TextInput style={styles.input}
           onChangeText={(value) => setItem(value)}
           placeholder="Enter item here..."
