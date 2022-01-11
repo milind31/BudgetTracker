@@ -1,10 +1,8 @@
-//Components
-import { StyleSheet, Text, SafeAreaView, View, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, Text, SafeAreaView, View, TextInput, Button, Alert, ScrollView } from 'react-native';
+import { useEffect, useState } from 'react';
 
 //Imports from helper files
-import openDatabase from '../database';
-import { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
+import openDatabase from '../database'
 
 const db = openDatabase();
 
@@ -18,11 +16,9 @@ export default function SetBudget() {
 
     useEffect(() => {
         db.transaction((tx) => {
-            console.log("here")
             tx.executeSql("select * from Budget", [], (_, { rows }) => 
                 {
                     if (rows.length > 0) {
-                        console.log(rows);
                         var budgetArr = rows['_array'][0];
                         setRestaurant(budgetArr['restaurant']);
                         setGroceries(budgetArr['groceries']);
@@ -32,7 +28,6 @@ export default function SetBudget() {
                         setOther(budgetArr['other']);
                     }
                     else {
-                        console.log('initializing first row')
                         tx.executeSql('INSERT INTO Budget (user, restaurant, groceries, home, entertainment, transportation, other) VALUES (?, ?, ?, ?, ?, ?, ?)', ['user', -1.00, -1.00, -1.00, -1.00, -1.00, -1.00]);
                     }
                 }
@@ -44,9 +39,8 @@ export default function SetBudget() {
         db.transaction((tx) => {
             tx.executeSql("UPDATE Budget SET restaurant=?, groceries=?, home=?, entertainment=?, transportation=?, other=? WHERE user='user'", 
             [parseFloat(restaurant).toFixed(2), parseFloat(groceries).toFixed(2), parseFloat(home).toFixed(2), parseFloat(entertainment).toFixed(2), parseFloat(transportation).toFixed(2), parseFloat(other).toFixed(2)]);
-            
-            tx.executeSql("select * from Budget", [], (_, { rows }) => console.log(rows));
         });
+
         Alert.alert(
             "Budget Set!",
             "",

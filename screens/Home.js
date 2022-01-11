@@ -104,8 +104,6 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBudgetData(copyBudgetData);
-                    console.log('budget done');
-
                     setBudgetDataLoaded(true);
                 }
             );
@@ -149,8 +147,6 @@ export default function Home({ navigation }) {
                         }
                     }
                     setBarData({labels: labels.reverse(), datasets: [{data:data.reverse()}]});
-                    console.log('bar done');
-
                     setBarChartDataLoaded(true);
                 }
             );
@@ -215,7 +211,6 @@ export default function Home({ navigation }) {
                     setProgressData({data: progressValues, labels: progressLabels});
                     setCategoryData(tempCategoryData);
                     setMonthlyTotal(sum.toFixed(2));
-                    console.log('cat done');
                     setCategoryDataLoaded(true);
                 }
             );
@@ -238,7 +233,6 @@ export default function Home({ navigation }) {
     
 
     useEffect(() => {
-        console.log('picker set');
         db.transaction((tx) => {
             tx.executeSql("select month, year from Transact group by month, year ", [], (_, { rows }) =>
                 {
@@ -252,12 +246,7 @@ export default function Home({ navigation }) {
             );
             setData();
         });
-        const unsubscribe = navigation.addListener('focus', () => {
-            //setData();
-          });
-      
-          return unsubscribe;
-    }, [navigation]);
+    }, []);
 
   return (
     <SafeAreaView style={styles.mainContainer}>
@@ -284,7 +273,7 @@ export default function Home({ navigation }) {
                     }}
                     value={month}
                     onDonePress={() => setData()}
-                    onValueChange={(value) => setMonth(value)}
+                    onValueChange={(value) => (value && setMonth(value))}
                     items={monthPicker}
                 />
             </View>
@@ -313,12 +302,11 @@ export default function Home({ navigation }) {
             {hasBudget && hasExpense && ( overBudget.length > 0 ? <Text style={styles.overBudget}>Categories Over Budget:</Text> : <Text style={styles.overBudget}>No categories over budget!</Text>)}
             {hasBudget && !!!(hasExpense) && <Text style={styles.overBudget}>You have not spent any money this month!</Text>}
             {!!!(hasBudget) && hasExpense && <Text style={styles.overBudget}>You have not yet specified a budget!</Text>}
-            {hasBudget && hasExpense && overBudget.map((str) => <Text>{str}</Text>)}
+            {hasBudget && hasExpense && overBudget.map((str) => <Text key={str}>{str}</Text>)}
             {hasBudget ? 
                 <Button title="Adjust Budget" onPress={() => navigation.navigate('SetBudget')}></Button> 
                 :
-                <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>
-            }
+                <Button title="Set Budget" onPress={() => navigation.navigate('SetBudget')}></Button>}
             <View style={styles.contributions}>
                 <Text style={styles.sectionHeader}>Transaction History</Text>
                 <View>
@@ -346,8 +334,7 @@ export default function Home({ navigation }) {
         : 
         <ScrollView contentContainerStyle={styles.container}>
             <ActivityIndicator style={{height: screenHeight/1.25}} size='large' color="#0000ff"/>
-        </ScrollView>
-        }
+        </ScrollView>}
     </SafeAreaView>
   );
 }

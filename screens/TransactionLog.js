@@ -92,11 +92,33 @@ export default function TransactionLog({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, paddingTop: 30, backgroundColor: '#fff' },
-    head: { height: 40, backgroundColor: '#f1f8ff' },
-    text: { fontSize: 9, margin: 6 },
-    table: { margin: 10, marginTop: 25, justifyContent: 'center' },
-    row: { flexDirection: 'row' },
-    header: {  alignItems: 'center', paddingTop: 20 },
-    headerText: { fontSize: 20 },
+    container: { 
+      flex: 1, 
+      padding: 20, 
+      paddingTop: 30, 
+      backgroundColor: '#fff'
+    },
+    head: { 
+      height: 40, 
+      backgroundColor: '#f1f8ff'
+    },
+    text: { 
+      fontSize: 9,
+      margin: 6
+    },
+    table: { 
+      margin: 10,
+      marginTop: 25, 
+      justifyContent: 'center'
+    },
+    row: { 
+      flexDirection: 'row'
+    },
+    header: {  
+      alignItems: 'center',
+      paddingTop: 20
+    },
+    headerText: { 
+      fontSize: 20
+    },
   });

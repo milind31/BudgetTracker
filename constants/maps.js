@@ -8,8 +8,9 @@ export const simpleCategoryMap = {
     'Transportation' : 'transportation'
 }
 
+//convert frontend category names to formal variable names for backend
 export const formalCategoryMap = {
-    'restaurant' : 'Fast Food/Restaurant',
+    'restaurant' : 'Restaurant',
     'entertainment' : 'Entertainment',
     'groceries' : 'Groceries',
     'home' : 'Home Stuff',
@@ -47,6 +48,7 @@ export const fullMonthMap = {
     12: 'December',
 }
 
+//pie chart color mappings
 export const colorMap = {
     'Fast Food/Restaurant' : '#f72df7',
     'Entertainment' : '#07b51e',

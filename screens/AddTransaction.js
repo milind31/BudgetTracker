@@ -28,9 +28,6 @@ export default function AddTransaction({ route, navigation }) {
   useEffect(() => {
     db.transaction((tx) => {
       tx.executeSql(
-        //"drop table if exists Transact"
-      );
-      tx.executeSql(
         "create table if not exists Transact (item varchar(100) not null, amount numeric not null, category varchar(100) not null, description varchar(500), type varchar(10) not null, month int not null, day int not null, year int not null);"
       );
     });
@@ -117,14 +114,10 @@ export default function AddTransaction({ route, navigation }) {
       day: dayOfMonth,
       year: year,
     }
-    console.log(transactionItem)
 
     db.transaction(
       (tx) => {
         tx.executeSql('INSERT INTO Transact (item, amount, category, description, type, month, day, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [transactionItem.item, transactionItem.amount, transactionItem.category, transactionItem.description, transactionItem.type, transactionItem.month, transactionItem.day, transactionItem.year]);
-        tx.executeSql("select * from Transact", [], (_, { rows }) =>
-          console.log(JSON.stringify(rows))
-        );
       }
     );
 
