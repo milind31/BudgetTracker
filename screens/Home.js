@@ -74,10 +74,12 @@ export default function Home({ navigation }) {
                         let month= rows['_array'][i]['month'];
                         let day = rows['_array'][i]['day'];
                         let year = rows['_array'][i]['year'];
+
                         const contribution = {
                             date: year.toString() + '-' + (month < 10 ? '0' : '') + month.toString() + '-' +  (day < 10 ? '0' : '') + day.toString(),
                             count: rows['_array'][i]['count']
                         }
+
                         data.push(contribution);
                     }
                     setContribData(data);
@@ -96,6 +98,7 @@ export default function Home({ navigation }) {
                         setBudgetDataLoaded(true);
                         return
                     }
+
                     setHasBudget(true);
                     var copyBudgetData = budgetData;
                     for (const [key, value] of Object.entries(rows['_array'][0])) {
@@ -182,8 +185,8 @@ export default function Home({ navigation }) {
 
                         //populate pie chart data
                         const pieChartCategory = {
-                            name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category,
-                            amount: amount,
+                            name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category, //to shorten length of displayed string
+                            amount: amount.toFixed(2),
                             color: colorMap[category],
                             legendFontColor: "#7F7F7F",
                             legendFontSize: 12

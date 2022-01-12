@@ -7,7 +7,6 @@ import { ScrollView, StyleSheet, SafeAreaView, View, Text, RefreshControl } from
 import { Table, Row, TableWrapper, Cell } from 'react-native-table-component';
 
 //Imports from helper files
-import { currentMonth, currentYear } from '../utilities/dates';
 import { monthMap } from '../constants/maps';
 import openDatabase from '../database';
 
@@ -62,7 +61,7 @@ export default function TransactionLog({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>{"Transaction Log for " + monthMap[route.params.month] + String(route.params.year)}</Text>
+        <Text style={styles.headerText}>{`Transaction Log for ${monthMap[route.params.month]} ${String(route.params.year)}`}</Text>
       </View>
       <ScrollView 
         refreshControl={
@@ -85,7 +84,7 @@ export default function TransactionLog({ route, navigation }) {
             ))
           }
         </Table>
-        {((currentMonth != route.params.month) || (currentYear != route.params.year)) && <Button title="Add a Transaction for this Month" onPress={() => navigation.navigate('AddTransaction', {month: route.params.month, year: route.params.year})}/> }
+        {<Button title="Add a Transaction for this Month" onPress={() => navigation.navigate('AddTransaction', {month: route.params.month, year: route.params.year})}/> }
       </ScrollView>
     </SafeAreaView>
   );
