@@ -11,6 +11,7 @@ import { pickerSelectStyles } from '../styles/styles';
 import { currentMonth, currentYear, currentDay, getMaxDayInMonth } from '../utilities/dates';
 import openDatabase from '../database';
 import { fullMonthMap } from '../constants/maps';
+import { ScrollView } from 'react-native';
 
 const db = openDatabase();
 
@@ -135,54 +136,56 @@ export default function AddTransaction({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Enter a Transaction</Text>
-        <SegmentedControl 
-          style={styles.segCtrl}
-          values={["Expense", "Income"]}
-          onChange={(event) => onChangeType(event)}
-          selectedIndex={0}
-        />
-      </View>
-      <View style={styles.form}>
-        {route.params &&
-        <TextInput style={styles.input}
-          keyboardType="numeric"
-          onChangeText={(value) => setDayOfMonth(value)}
-          placeholder="Enter day of month purchased here..."
-          value={dayOfMonth === 0 ? '' : dayOfMonth.toString()}
-        />}
-        <TextInput style={styles.input}
-          onChangeText={(value) => setItem(value)}
-          placeholder="Enter item here..."
-          value={item}
-        />
-        <TextInput style={styles.input}
-          keyboardType="numeric"
-          onChangeText={(value) => setAmount(value)}
-          placeholder="Enter amount here..."
-          value={amount === 0 ? '' : amount.toString()}
-        />
-        <RNPickerSelect
-          style={pickerSelectStyles}
-          placeholder={{
-            label: 'Select a category here...',
-            value: null,
-            color: '#9EA0A4',
-          }}
-          value={category}
-          onValueChange={(value) => setCategory(value)}
-          items={pickerItems}
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps='handled'>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Enter a Transaction</Text>
+          <SegmentedControl 
+            style={styles.segCtrl}
+            values={["Expense", "Income"]}
+            onChange={(event) => onChangeType(event)}
+            selectedIndex={0}
           />
-        <TextInput style={styles.input}
-          onChangeText={(value) => setDescription(value)}
-          placeholder="Enter description here..."
-          value={description}
-        />
-        <Button title="Submit"
-          onPress={() => onSubmitTransaction()}
-        />
-      </View>
+        </View>
+        <View style={styles.form}> 
+          {route.params &&
+          <TextInput style={styles.input}
+            keyboardType="numeric"
+            onChangeText={(value) => setDayOfMonth(value)}
+            placeholder="Enter day of month purchased here..."
+            value={dayOfMonth === 0 ? '' : dayOfMonth.toString()}
+          />}
+          <TextInput style={styles.input}
+            onChangeText={(value) => setItem(value)}
+            placeholder="Enter item here..."
+            value={item}
+          />
+          <TextInput style={styles.input}
+            keyboardType="numeric"
+            onChangeText={(value) => setAmount(value)}
+            placeholder="Enter amount here..."
+            value={amount === 0 ? '' : amount.toString()}
+          />
+          <RNPickerSelect
+            style={pickerSelectStyles}
+            placeholder={{
+              label: 'Select a category here...',
+              value: null,
+              color: '#9EA0A4',
+            }}
+            value={category}
+            onValueChange={(value) => setCategory(value)}
+            items={pickerItems}
+            />
+          <TextInput style={styles.input}
+            onChangeText={(value) => setDescription(value)}
+            placeholder="Enter description here..."
+            value={description}
+          />
+          <Button title="Submit"
+            onPress={() => onSubmitTransaction()}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

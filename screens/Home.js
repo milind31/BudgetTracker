@@ -186,7 +186,7 @@ export default function Home({ navigation }) {
                         //populate pie chart data
                         const pieChartCategory = {
                             name: category === 'Fast Food/Restaurant' ? 'Eating Out' : category, //to shorten length of displayed string
-                            amount: amount.toFixed(2),
+                            amount: parseFloat(amount.toFixed(2)),
                             color: colorMap[category],
                             legendFontColor: "#7F7F7F",
                             legendFontSize: 12
